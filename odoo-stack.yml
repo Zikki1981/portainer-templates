@@ -5,7 +5,7 @@ services:
     image: postgres:11-alpine
     networks:
       - "local"
-      - "dbgui"
+
     environment:
       - "POSTGRES_PASSWORD=${POSTGRES_ROOT_PASSWORD}"
       - "POSTGRES_DB=odooadd"
@@ -15,7 +15,7 @@ services:
     image: odoo:latest
     networks:
       - "local"
-      - "rvproxy"
+
     volumes:
       - "db-data:/var/lib/postgresql/data/pgdata"
     environment:
