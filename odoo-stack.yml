@@ -42,4 +42,6 @@ networks:
 
 volumes:
   db-data:
-    driver: local
+    driver: cio
+    driver_opts:
+      profile: "PGSQL"
