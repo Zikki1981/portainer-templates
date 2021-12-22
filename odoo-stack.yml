@@ -33,12 +33,6 @@ services:
 networks:
   local:
     driver: overlay
-  dbgui:
-    external:
-      name: adminer-net
-  rvproxy:
-    external:
-      name: traefik-net
 
 volumes:
   db-data:
