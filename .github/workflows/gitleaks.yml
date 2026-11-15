@@ -1,0 +1,33 @@
+# INFRA-73 (intrusion du 10/11/2026) : refuse tout nouveau commit qui contient un secret.
+# Seuls les commits apportés par la PR ou le push sont lus : l'historique ancien est traité à part (rotation INFRA-66,
+# réécriture dépôt par dépôt). Image officielle gitleaks, version épinglée ; aucun secret ni jeton utilisé.
+name: gitleaks
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secrets dans les nouveaux commits
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # premier push d'une branche ou force-push : la base est absente, on lit le seul dernier commit
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE="$HEAD~1"; fi
+          RANGE="$BASE..$HEAD"
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || RANGE="-1 $HEAD"   # commit racine
+          echo "Plage lue : $RANGE"
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1 \
+            git /repo --log-opts="$RANGE" --redact --no-banner --verbose
